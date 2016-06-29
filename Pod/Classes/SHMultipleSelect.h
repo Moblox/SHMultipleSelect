@@ -23,13 +23,14 @@
 @end
 
 
-@interface SHMultipleSelect : UIView<UITableViewDataSource, UITableViewDelegate> {
+@interface SHMultipleSelect : UIView<UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate> {
     UITableView* _table;
     UIScrollView* _tableScroll;
     UIButton* _cancelBtn;
     UIButton* _doneBtn;
     UIView* _btnsSeparator;
     UIView* _coverView;
+    UISearchBar* _searchBar;
 }
 
 @property (nonatomic, assign) id<SHMultipleSelectDelegate> delegate;

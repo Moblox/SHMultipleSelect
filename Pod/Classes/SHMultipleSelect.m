@@ -19,6 +19,11 @@
 {
     //To preserve selection after selectAll has been selected and then deselected
     NSArray *selectedIBackup;
+    NSMutableArray *items;
+    NSMutableArray *itemsSelected;
+    NSMutableArray *itemsFiltered;
+    NSMutableArray *itemsFilteredSelected;
+    NSString* searchTerm;
 }
 
 const int selectionRowHeight = 40;
@@ -43,6 +48,14 @@ const int selectionTopMargin = 30;
         
         _tableScroll = [[UIScrollView alloc] init];
         
+        items = [NSMutableArray new];
+        itemsFiltered = [NSMutableArray new];
+        itemsSelected = [NSMutableArray new];
+        itemsFilteredSelected = [NSMutableArray new];
+        
+        _searchBar = [[UISearchBar alloc] init];
+        _searchBar.delegate = self;
+        
         _cancelBtn = [[UIButton alloc] init];
         _doneBtn = [[UIButton alloc] init];
         _btnsSeparator = [[UIView alloc] init];
@@ -54,6 +67,67 @@ const int selectionTopMargin = 30;
     return self;
 }
 
+#pragma mark - Process Info
+
+- (void)processInfo {
+    [items removeAllObjects];
+    [itemsFiltered removeAllObjects];
+    [itemsSelected removeAllObjects];
+    [itemsFilteredSelected removeAllObjects];
+    
+    for (int i = 0; i < self.rowsCount; i++) {
+        NSIndexPath* indexPath = [NSIndexPath indexPathForRow:i inSection:0];
+        if ([_delegate respondsToSelector:@selector(multipleSelectView:titleForRowAtIndexPath:)]) {
+            NSString* text = [_delegate multipleSelectView:self titleForRowAtIndexPath:indexPath];
+            [items addObject:[text copy]];
+            [itemsFiltered addObject:[text copy]];
+        }
+        
+        NSNumber* selected = [NSNumber numberWithBool:NO];
+        if ([_delegate respondsToSelector:@selector(multipleSelectView:setSelectedForRowAtIndexPath:)]) {
+            BOOL isSelected = [_delegate multipleSelectView:self setSelectedForRowAtIndexPath:indexPath];
+            selected = [NSNumber numberWithBool:isSelected];
+        }
+        [itemsSelected addObject:[selected copy]];
+        [itemsFilteredSelected addObject:[selected copy]];
+    }
+    
+    
+}
+
+#pragma mark - UISearchBarDelegate
+
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
+    [itemsFiltered removeAllObjects];
+    [itemsFilteredSelected removeAllObjects];
+    
+    for (int i = 0; i < self.rowsCount; i++) {
+        NSString* item      = [items objectAtIndex:i];
+        NSString* selected  = [itemsSelected objectAtIndex:i];
+        
+        if ([searchText isEqualToString:@""]) {
+            [itemsFiltered addObject:[item copy]];
+            [itemsFilteredSelected addObject:[selected copy]];
+            continue;
+        }
+        
+        NSRange searchedStringRange = [item rangeOfString:searchText
+                                                  options:NSCaseInsensitiveSearch
+                                       | NSDiacriticInsensitiveSearch
+                                       | NSWidthInsensitiveSearch];
+        // location was found == should be displayed
+        BOOL containsString = searchedStringRange.location != NSNotFound;
+        if(containsString == TRUE) {
+            [itemsFiltered addObject:[item copy]];
+            [itemsFilteredSelected addObject:[selected copy]];
+        }
+
+    }
+    
+    _table.reloadData;
+}
+
+
 #pragma mark - UITableViewDataSource
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -63,7 +137,7 @@ const int selectionTopMargin = 30;
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return _rowsCount;
+    return [itemsFiltered count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -74,15 +148,12 @@ const int selectionTopMargin = 30;
     if (!cell) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
     }
-    NSString* text = nil;
-    if ([_delegate respondsToSelector:@selector(multipleSelectView:titleForRowAtIndexPath:)]) {
-        text = [_delegate multipleSelectView:self titleForRowAtIndexPath:indexPath];
-    }
-    cell.textLabel.text = text;
+
+    cell.textLabel.text = [itemsFiltered objectAtIndex:indexPath.row];
     
     BOOL selected = NO;
-    if ([_delegate respondsToSelector:@selector(multipleSelectView:setSelectedForRowAtIndexPath:)]) {
-        selected = [_delegate multipleSelectView:self setSelectedForRowAtIndexPath:indexPath];
+    if([[itemsFilteredSelected objectAtIndex:indexPath.row] isEqualToNumber:@YES]) {
+        selected = YES;
     }
     
     if (selected) {
@@ -97,13 +168,23 @@ const int selectionTopMargin = 30;
     if ([_delegate respondsToSelector:@selector(multipleSelectView:didSelectRowAtIndexPath:)]) {
         [_delegate multipleSelectView:self didSelectRowAtIndexPath:indexPath];
     }
-
+    
     if (self.hasSelectAll && (indexPath.row==0)) {
         
         selectedIBackup = _table.indexPathsForSelectedRows;
         
-        for (int i=1; i<self.rowsCount; i++) {
+        for (int i=1; i<[itemsFiltered count]; i++) {
             [_table selectRowAtIndexPath:[NSIndexPath indexPathForRow:i inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
+        }
+        
+    }
+    
+    [itemsFilteredSelected replaceObjectAtIndex:indexPath.row withObject:[NSNumber numberWithBool:YES]];
+    NSString* stringSelected = [itemsFiltered objectAtIndex:indexPath.row];
+    for (int i=0; i<[items count]; i++) {
+        NSString* item      = [items objectAtIndex:i];
+        if([item isEqualToString:stringSelected]) {
+            [itemsSelected replaceObjectAtIndex:i withObject:[NSNumber numberWithBool:YES]];
         }
     }
 }
@@ -121,6 +202,15 @@ const int selectionTopMargin = 30;
     }
     else if (self.hasSelectAll) {
         [_table deselectRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] animated:NO];
+    }
+    
+    [itemsFilteredSelected replaceObjectAtIndex:indexPath.row withObject:[NSNumber numberWithBool:NO]];
+    NSString* stringSelected = [itemsFiltered objectAtIndex:indexPath.row];
+    for (int i=1; i<[items count]; i++) {
+        NSString* item      = [items objectAtIndex:i];
+        if([item isEqualToString:stringSelected]) {
+            [itemsSelected replaceObjectAtIndex:i withObject:[NSNumber numberWithBool:NO]];
+        }
     }
 }
 
@@ -163,7 +253,11 @@ const int selectionTopMargin = 30;
     _tableScroll.contentSize = CGSizeMake(_tableScroll.width, allRowsHeight);
     [_coverView addSubview:_tableScroll];
     
-    _table.frame = CGRectMake(0, 0, _tableScroll.width, allRowsHeight);
+    _searchBar.frame = CGRectMake(0.0, 0.0, _tableScroll.width, 44.0);
+//    [_tableScroll addSubview:_searchBar];
+    _table.tableHeaderView = _searchBar;
+    
+    _table.frame = CGRectMake(0.0, 0.0, _tableScroll.width, allRowsHeight);
     [_tableScroll addSubview:_table];
     
     UIImage *btnImageNormal = [[UIImage imageWithColor:[UIColor whiteColor]
@@ -195,6 +289,8 @@ const int selectionTopMargin = 30;
     _btnsSeparator.frame = CGRectMake(_cancelBtn.right, _tableScroll.bottom, 0.7, selectionBtnHeight);
     _btnsSeparator.backgroundColor = [UIColor lightGrayColor];
     [_coverView addSubview:_btnsSeparator];
+    
+    [self processInfo];
     
     [[[[UIApplication sharedApplication] delegate] window] addSubview:self];
 }
