@@ -24,6 +24,7 @@
     NSMutableArray *itemsFiltered;
     NSMutableArray *itemsFilteredSelected;
     NSString* searchTerm;
+    UIBarButtonItem* doneButton;
 }
 
 const int selectionRowHeight = 40;
@@ -63,6 +64,11 @@ const int selectionTopMargin = 30;
         _coverView = [[UIView alloc] init];
         
         self.hasSelectAll = NO;
+
+        doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonItemStylePlain target:self action:@selector(dismissKeyboard)];
+        UIToolbar* toolBar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0, 0.0, self.width, 44)];
+        toolBar.items = @[doneButton];
+        _searchBar.inputAccessoryView = toolBar;
     }
     return self;
 }
@@ -125,6 +131,16 @@ const int selectionTopMargin = 30;
     }
     
     _table.reloadData;
+}
+
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
+{
+    [self endEditing:YES];
+}
+
+- (void)dismissKeyboard
+{
+    [self endEditing:YES];
 }
 
 
