@@ -143,6 +143,16 @@ const int selectionTopMargin = 30;
     [self endEditing:YES];
 }
 
+- (NSInteger)numberOfItemsSelected {
+    NSInteger totalItemsSelected = 0;
+    for (int i = 0; i < [itemsFilteredSelected count]; i++) {
+        if([itemsFilteredSelected[i] isEqualToNumber:@1]) {
+            totalItemsSelected++;
+        }
+    }
+    return totalItemsSelected;
+}
+
 
 #pragma mark - UITableViewDataSource
 

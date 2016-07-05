@@ -39,5 +39,6 @@
 @property (nonatomic, assign) BOOL hasSelectAll;
 
 - (void)show;
+- (NSInteger)numberOfItemsSelected;
 
 @end
