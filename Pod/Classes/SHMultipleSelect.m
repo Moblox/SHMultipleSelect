@@ -64,7 +64,7 @@ const int selectionTopMargin = 30;
         _coverView = [[UIView alloc] init];
         
         self.hasSelectAll = NO;
-
+        
         doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonItemStylePlain target:self action:@selector(dismissKeyboard)];
         UIToolbar* toolBar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0, 0.0, self.width, 44)];
         toolBar.items = @[doneButton];
@@ -127,7 +127,7 @@ const int selectionTopMargin = 30;
             [itemsFiltered addObject:[item copy]];
             [itemsFilteredSelected addObject:[selected copy]];
         }
-
+        
     }
     
     _table.reloadData;
@@ -174,7 +174,7 @@ const int selectionTopMargin = 30;
     if (!cell) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
     }
-
+    
     cell.textLabel.text = [itemsFiltered objectAtIndex:indexPath.row];
     
     BOOL selected = NO;
@@ -228,7 +228,7 @@ const int selectionTopMargin = 30;
     
     [itemsFilteredSelected replaceObjectAtIndex:indexPath.row withObject:[NSNumber numberWithBool:NO]];
     NSString* stringSelected = [itemsFiltered objectAtIndex:indexPath.row];
-    for (int i=1; i<[items count]; i++) {
+    for (int i=0; i<[items count]; i++) {
         NSString* item      = [items objectAtIndex:i];
         if([item isEqualToString:stringSelected]) {
             [itemsSelected replaceObjectAtIndex:i withObject:[NSNumber numberWithBool:NO]];
@@ -248,7 +248,7 @@ const int selectionTopMargin = 30;
     
     //Fixes an issue when triggerring while keyboard is showing
     [[[UIApplication sharedApplication] keyWindow] endEditing:YES];
-
+    
     [UIView animateWithDuration:0.2 animations:^{
         self.layer.opacity = 1;
     }];
@@ -262,7 +262,7 @@ const int selectionTopMargin = 30;
     _tableScroll.frame = CGRectMake(0, 0, _coverView.width, 0);
     
     // table settings
-    CGFloat allRowsHeight = selectionRowHeight * _rowsCount;
+    CGFloat allRowsHeight = selectionRowHeight * _rowsCount + 44;
     
     if (allRowsHeight + 100 > self.height) {
         _coverView.top = selectionTopMargin;
@@ -280,7 +280,7 @@ const int selectionTopMargin = 30;
     [_coverView addSubview:_tableScroll];
     
     _searchBar.frame = CGRectMake(0.0, 0.0, _tableScroll.width, 44.0);
-//    [_tableScroll addSubview:_searchBar];
+    //    [_tableScroll addSubview:_searchBar];
     _table.tableHeaderView = _searchBar;
     
     _table.frame = CGRectMake(0.0, 0.0, _tableScroll.width, allRowsHeight);
@@ -328,7 +328,7 @@ const int selectionTopMargin = 30;
                      }
                      completion:^(BOOL finished) {
                          [self removeFromSuperview];
-                         if ([_delegate respondsToSelector:@selector(multipleSelectView:clickedBtnAtIndex:withSelectedIndexPaths:)]) {
+                         if (_delegate && [_delegate respondsToSelector:@selector(multipleSelectView:clickedBtnAtIndex:withSelectedIndexPaths:)]) {
                              [_delegate multipleSelectView:self clickedBtnAtIndex:sender.tag withSelectedIndexPaths:_table.indexPathsForSelectedRows];
                          }
                      }];
