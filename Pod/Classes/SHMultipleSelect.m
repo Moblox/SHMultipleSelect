@@ -329,7 +329,15 @@ const int selectionTopMargin = 30;
                      completion:^(BOOL finished) {
                          [self removeFromSuperview];
                          if (_delegate && [_delegate respondsToSelector:@selector(multipleSelectView:clickedBtnAtIndex:withSelectedIndexPaths:)]) {
-                             [_delegate multipleSelectView:self clickedBtnAtIndex:sender.tag withSelectedIndexPaths:_table.indexPathsForSelectedRows];
+                             // Create list of selectedIndexPaths
+                             NSMutableArray* selectedIndexPaths = [@[] mutableCopy];
+                             for (int i = 0; i < [itemsSelected count]; i++) {
+                                 if([[itemsSelected objectAtIndex:i] isEqualToNumber:@YES]) {
+                                     NSIndexPath* indexPath = [NSIndexPath indexPathForRow:i inSection:0];
+                                     [selectedIndexPaths addObject:indexPath];
+                                 }
+                             }
+                             [_delegate multipleSelectView:self clickedBtnAtIndex:sender.tag withSelectedIndexPaths:selectedIndexPaths];
                          }
                      }];
 }
