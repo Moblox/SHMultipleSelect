@@ -210,7 +210,7 @@ const int selectionTopMargin = 30;
         }
     }
     
-    if ([_delegate respondsToSelector:@selector(multipleSelectView:didSelectRowAtIndexPath:)]) {
+    if (_delegate && [_delegate respondsToSelector:@selector(multipleSelectView:didSelectRowAtIndexPath:)]) {
         [_delegate multipleSelectView:self didSelectRowAtIndexPath:indexPath];
     }
 }
@@ -235,7 +235,7 @@ const int selectionTopMargin = 30;
         }
     }
     
-    if ([_delegate respondsToSelector:@selector(multipleSelectView:didDeselectRowAtIndexPath:)]) {
+    if (_delegate && [_delegate respondsToSelector:@selector(multipleSelectView:didDeselectRowAtIndexPath:)]) {
         [_delegate multipleSelectView:self didDeselectRowAtIndexPath:indexPath];
     }
 }
